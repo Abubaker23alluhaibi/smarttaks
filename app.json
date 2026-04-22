@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Smart Task Planner",
+    "slug": "smart-task-planner",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F5F5F5"
     },
     "ios": {
       "supportsTablet": true
