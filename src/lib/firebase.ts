@@ -13,7 +13,7 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-let firebaseAuth;
+let firebaseAuth: Auth;
 try {
   const { initializeAuth, getReactNativePersistence } = require('@firebase/auth/dist/rn/index.js') as {
     initializeAuth: (appArg: typeof app, deps?: Dependencies) => Auth;
