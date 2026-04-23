@@ -39,6 +39,14 @@ async function authMiddleware(req, res, next) {
   }
 }
 
+app.get('/', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'smart-task-planner-backend',
+    endpoints: { health: '/health', tasks: '/tasks (requires Bearer token)' },
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'smart-task-planner-backend' });
 });
@@ -65,6 +73,7 @@ app.put('/tasks', authMiddleware, async (req, res) => {
 });
 
 const port = Number(process.env.PORT || 4000);
-app.listen(port, () => {
-  console.log(`API listening on ${port}`);
+const host = process.env.HOST || '0.0.0.0';
+app.listen(port, host, () => {
+  console.log(`API listening on http://${host}:${port}`);
 });

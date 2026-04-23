@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Category, Priority, Task, TaskStatus } from '../types';
-import { STORAGE_KEY, STORAGE_KEY_V1 } from '../constants';
+import { STORAGE_KEY } from '../constants';
 import { normalizeTaskList } from '../utils/migrateTasks';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '../config/env';
@@ -35,24 +35,6 @@ function applyStatusPatch(task: Task, status: TaskStatus): Task {
     next = { ...next, completedAt: undefined };
   }
   return next;
-}
-
-async function loadTasksFromStorage(): Promise<Task[]> {
-  try {
-    const v2 = await AsyncStorage.getItem(STORAGE_KEY);
-    if (v2 !== null) {
-      return normalizeTaskList(JSON.parse(v2) as unknown);
-    }
-    const v1 = await AsyncStorage.getItem(STORAGE_KEY_V1);
-    if (v1 !== null) {
-      const migrated = normalizeTaskList(JSON.parse(v1) as unknown);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-      return migrated;
-    }
-    return [];
-  } catch {
-    return [];
-  }
 }
 
 async function saveTasksToStorage(tasks: Task[]): Promise<void> {
@@ -89,14 +71,17 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [remoteSyncEnabled, setRemoteSyncEnabled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setHydrated(false);
+    setRemoteSyncEnabled(false);
 
     const load = async () => {
       if (!user) {
         setTasks([]);
+        setRemoteSyncEnabled(false);
         setHydrated(true);
         return;
       }
@@ -111,6 +96,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           const body = (await res.json()) as { tasks?: unknown };
           const remoteTasks = normalizeTaskList(body.tasks ?? []);
           if (!cancelled) setTasks(remoteTasks);
+          if (!cancelled) setRemoteSyncEnabled(true);
           await saveTasksForUser(user.uid, remoteTasks);
         }
       } catch {
@@ -134,6 +120,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     }
     const sync = async () => {
       await saveTasksForUser(user.uid, tasks);
+      if (!remoteSyncEnabled) return;
       try {
         const token = await user.getIdToken();
         await fetch(`${API_BASE_URL}/tasks`, {
@@ -149,7 +136,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       }
     };
     void sync();
-  }, [tasks, hydrated, user]);
+  }, [tasks, hydrated, remoteSyncEnabled, user]);
 
   const addTask = useCallback(
     (title: string, category: Category, priority: Priority) => {

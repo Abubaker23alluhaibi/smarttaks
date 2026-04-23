@@ -1,6 +1,5 @@
 import type { Category, Priority, StatusFilter } from './types';
 
-export const STORAGE_KEY_V1 = 'smart_task_planner_tasks_v1';
 export const STORAGE_KEY = 'smart_task_planner_tasks_v2';
 
 export const PROFILE_STORAGE_KEY = 'smart_task_planner_profile_v1';

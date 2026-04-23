@@ -1,9 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import type firebase from 'firebase/compat/app';
+import type { User } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth';
 import { firebaseAuth } from '../lib/firebase';
 
 type AuthContextValue = {
-  user: firebase.User | null;
+  user: User | null;
   hydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -13,11 +19,11 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<firebase.User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = firebaseAuth.onAuthStateChanged((nextUser) => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (nextUser) => {
       setUser(nextUser);
       setHydrated(true);
     });
@@ -29,13 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       hydrated,
       async login(email: string, password: string) {
-        await firebaseAuth.signInWithEmailAndPassword(email, password);
+        await signInWithEmailAndPassword(firebaseAuth, email, password);
       },
       async register(email: string, password: string) {
-        await firebaseAuth.createUserWithEmailAndPassword(email, password);
+        await createUserWithEmailAndPassword(firebaseAuth, email, password);
       },
       async logout() {
-        await firebaseAuth.signOut();
+        await signOut(firebaseAuth);
       },
     }),
     [hydrated, user],

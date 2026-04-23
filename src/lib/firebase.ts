@@ -1,5 +1,7 @@
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import type { Auth, Dependencies } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -10,8 +12,18 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+let firebaseAuth;
+try {
+  const { initializeAuth, getReactNativePersistence } = require('@firebase/auth/dist/rn/index.js') as {
+    initializeAuth: (appArg: typeof app, deps?: Dependencies) => Auth;
+    getReactNativePersistence: (storage: typeof AsyncStorage) => Dependencies['persistence'];
+  };
+  firebaseAuth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch {
+  firebaseAuth = getAuth(app);
 }
 
-export const firebaseAuth = firebase.auth();
+export { firebaseAuth };
